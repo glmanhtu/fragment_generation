@@ -76,10 +76,9 @@ def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proporti
 
 
 class ImageData(Dataset):
-    def __init__(self, dataset_dir, output_dir, patch_size):
+    def __init__(self, dataset_dir, output_dir):
         self.dataset = sorted(glob.glob(os.path.join(dataset_dir, '**', '*.jpg'), recursive=True))
         self.working_dir = output_dir
-        self.patch_size = patch_size
 
     def __len__(self):
         return len(self.dataset)
@@ -109,7 +108,7 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    dataset = ImageData(args.dataset_dir, args.output_dir, args.patch_size)
+    dataset = ImageData(args.dataset_dir, args.output_dir)
     dataloader = DataLoader(dataset, batch_size=args.n_workers, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
     for img in tqdm.tqdm(dataloader):
