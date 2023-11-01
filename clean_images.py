@@ -120,7 +120,7 @@ if __name__ == '__main__':
     dataset = ImageData(args.dataset_dir, args.output_dir)
     dataloader = DataLoader(dataset, batch_size=args.n_workers + 1, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
-    for idxs in tqdm.tqdm(dataset):
+    for idxs in tqdm.tqdm(dataloader):
         a = 1
 
     print('Finished!')
