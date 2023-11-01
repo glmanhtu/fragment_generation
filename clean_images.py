@@ -23,7 +23,14 @@ def remove_small_artifacts(np_img, kernel_size=2):
 
 
 def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proportion=0.2):
-    np_img = cv2.copyMakeBorder(np_img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=np_img[0][0].tolist())
+    # Extract the four corner pixels
+    top_left = np_img[0, 0]
+    top_right = np_img[0, -1]
+    bottom_left = np_img[-1, 0]
+    bottom_right = np_img[-1, -1]
+    max_color = np.maximum.reduce([top_left, top_right, bottom_left, bottom_right])
+
+    np_img = cv2.copyMakeBorder(np_img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=max_color.tolist())
     gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
     shape_ext, _, _, _ = thresholdSegmentation(gray, blur_size, ellipse_size)
 
@@ -113,7 +120,7 @@ if __name__ == '__main__':
     dataset = ImageData(args.dataset_dir, args.output_dir)
     dataloader = DataLoader(dataset, batch_size=args.n_workers + 1, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
-    for idxs in tqdm.tqdm(dataloader):
+    for idxs in tqdm.tqdm(dataset):
         a = 1
 
     print('Finished!')
