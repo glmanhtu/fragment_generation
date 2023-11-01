@@ -23,6 +23,7 @@ def remove_small_artifacts(np_img, kernel_size=2):
 
 
 def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proportion=0.2):
+    np_img = cv2.copyMakeBorder(np_img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=np_img[0][0].tolist())
     gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
     shape_ext, _, _, _ = thresholdSegmentation(gray, blur_size, ellipse_size)
 
