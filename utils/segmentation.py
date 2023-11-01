@@ -96,14 +96,14 @@ def crop_image(image, pixel_value=0):
 
     crop_rows = image[~np.all(gray == pixel_value, axis=1), :]
     cropped_image = crop_rows[:, ~np.all(crop_rows_gray == pixel_value, axis=0)]
-
-    black_pixels = np.where(
-        (cropped_image[:, :, 0] == 0) &
-        (cropped_image[:, :, 1] == 0) &
-        (cropped_image[:, :, 2] == 0)
-    )
-
-    # set those pixels to white
-    cropped_image[black_pixels] = [255, 255, 255]
+    #
+    # black_pixels = np.where(
+    #     (cropped_image[:, :, 0] == 0) &
+    #     (cropped_image[:, :, 1] == 0) &
+    #     (cropped_image[:, :, 2] == 0)
+    # )
+    #
+    # # set those pixels to white
+    # cropped_image[black_pixels] = [255, 255, 255]
 
     return cropped_image

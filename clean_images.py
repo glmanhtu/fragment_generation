@@ -9,7 +9,7 @@ from PIL import Image
 from sklearn.cluster import KMeans
 from torch.utils.data import Dataset, DataLoader
 
-from utils.segmentation import thresholdSegmentation
+from utils.segmentation import thresholdSegmentation, crop_image
 
 
 def remove_small_artifacts(np_img, kernel_size=2):
@@ -71,6 +71,7 @@ def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proporti
     # Apply the mask to the original image
     filtered_image = cv2.bitwise_and(np_img, np_img, mask=cv2.bitwise_not(color_range_mask))
     filtered_image = remove_small_artifacts(filtered_image)
+    filtered_image = crop_image(filtered_image)
     filtered_image[filtered_image == 0] = 255
     return filtered_image
 
@@ -109,7 +110,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     dataset = ImageData(args.dataset_dir, args.output_dir)
-    dataloader = DataLoader(dataset, batch_size=args.n_workers, num_workers=args.n_workers)
+    dataloader = DataLoader(dataset, batch_size=args.n_workers + 1, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
     for idxs in tqdm.tqdm(dataloader):
         a = 1
