@@ -95,16 +95,17 @@ class ImageData(Dataset):
 
     def __getitem__(self, index):
         img_path = self.dataset[index]
+        output_file = os.path.join(self.working_dir, os.path.basename(img_path))
+        if os.path.exists(output_file):
+            return ''
         with Image.open(img_path) as f:
             img = f.convert("RGB")
         np_img = np.asarray(img)
         try:
             clean_img = remove_background(np_img)
-            output_file = os.path.join(self.working_dir, os.path.basename(img_path))
             cv2.imwrite(output_file, cv2.cvtColor(clean_img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 100])
         except Exception as e:
             print(f'Unable to clean image {img_path}')
-            raise e
         return index
 
 
