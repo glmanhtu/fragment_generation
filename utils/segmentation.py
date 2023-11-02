@@ -22,7 +22,7 @@ def reconnectContours(contours, a, b):
     return cv2.add(t1, cv2.add(t2, cv2.add(t3, t4)))
 
 
-def thresholdSegmentation(im, blurSize, ellipseSize, threshSize=25, threshOffset=2, mask=None):
+def thresholdSegmentation(im, blurSize, ellipseSize, threshSize=25, threshOffset=2):
     blur = im.copy()
     blur = cv2.medianBlur(blur, blurSize)
     blur = cv2.GaussianBlur(blur, (blurSize, blurSize), 0, 0)
@@ -30,22 +30,16 @@ def thresholdSegmentation(im, blurSize, ellipseSize, threshSize=25, threshOffset
     thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, threshSize,
                                    threshOffset)
 
-    # masking
-    if (mask is not None):
-        thresh = cv2.subtract(thresh, cv2.bitwise_not(mask))
-
     # contour reconstruction
     a = ellipseSize
     b = a / 2
     ALCM = reconnectContours(thresh, a, b)
-
-    ALCM_bak = ALCM.copy()
     contours, _ = cv2.findContours(ALCM, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     res = np.zeros(im.shape, im.dtype)
     frag = [max(contours, key=cv2.contourArea)]
     cv2.drawContours(res, frag, -1, 255, -1)
 
-    return res, blur, thresh, ALCM_bak
+    return res
 
 
 def check_markers_are_found(ids, marker_ids):

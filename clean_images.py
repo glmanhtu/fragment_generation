@@ -22,24 +22,13 @@ def remove_small_artifacts(np_img, kernel_size=2):
     return filtered_image
 
 
-def finding_border_colour(np_img):
-    n_points_per_border = 30
-    points = []
-    for i in range(0, np_img.shape[0], np_img.shape[0] // n_points_per_border):
-        points.append(np_img[i, 0])
-
-    for i in range(0, np_img.shape[1], np_img.shape[1] // n_points_per_border):
-        points.append(np_img[0, i])
-
-    points = np.stack(points)
-    return points.mean(axis=0).astype(int)
-
 def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proportion=0.2):
-    border_colour = finding_border_colour(np_img)
 
-    np_img = cv2.copyMakeBorder(np_img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=border_colour.tolist())
+    # Add padding, since it seems to make the segmentation works easier
+    p_size = 20
+    np_img = cv2.copyMakeBorder(np_img, p_size, p_size, p_size, p_size, cv2.BORDER_REFLECT_101)
     gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
-    shape_ext, _, _, _ = thresholdSegmentation(gray, blur_size, ellipse_size)
+    shape_ext = thresholdSegmentation(gray, blur_size, ellipse_size)
 
     mask = np.zeros_like(np_img)
     mask[:, :, 0] = shape_ext
@@ -87,6 +76,10 @@ def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proporti
     # Apply the mask to the original image
     filtered_image = cv2.bitwise_and(np_img, np_img, mask=cv2.bitwise_not(color_range_mask))
     filtered_image = remove_small_artifacts(filtered_image)
+    w, h = filtered_image.shape[:2]
+
+    # Remove the padding added
+    filtered_image = filtered_image[p_size:w-p_size, p_size:h-p_size]
     filtered_image = crop_image(filtered_image)
     filtered_image[filtered_image == 0] = 255
     return filtered_image
