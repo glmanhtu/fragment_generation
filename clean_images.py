@@ -102,8 +102,6 @@ class ImageData(Dataset):
 
     def __getitem__(self, index):
         img_path = self.dataset[index]
-        if '3303v_3' not in img_path:
-            return ''
         with Image.open(img_path) as f:
             img = f.convert("RGB")
         np_img = np.asarray(img)
@@ -134,7 +132,7 @@ if __name__ == '__main__':
     dataset = ImageData(args.dataset_dir, args.output_dir)
     dataloader = DataLoader(dataset, batch_size=args.n_workers + 1, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
-    for idxs in tqdm.tqdm(dataset):
+    for idxs in tqdm.tqdm(dataloader):
         a = 1
 
     print('Finished!')
