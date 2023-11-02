@@ -22,15 +22,22 @@ def remove_small_artifacts(np_img, kernel_size=2):
     return filtered_image
 
 
-def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proportion=0.2):
-    # Extract the four corner pixels
-    top_left = np_img[0, 0]
-    top_right = np_img[0, -1]
-    bottom_left = np_img[-1, 0]
-    bottom_right = np_img[-1, -1]
-    max_color = np.maximum.reduce([top_left, top_right, bottom_left, bottom_right])
+def finding_border_colour(np_img):
+    n_points_per_border = 30
+    points = []
+    for i in range(0, np_img.shape[0], np_img.shape[0] // n_points_per_border):
+        points.append(np_img[i, 0])
 
-    np_img = cv2.copyMakeBorder(np_img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=max_color.tolist())
+    for i in range(0, np_img.shape[1], np_img.shape[1] // n_points_per_border):
+        points.append(np_img[0, i])
+
+    points = np.stack(points)
+    return points.mean(axis=0).astype(int)
+
+def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proportion=0.2):
+    border_colour = finding_border_colour(np_img)
+
+    np_img = cv2.copyMakeBorder(np_img, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=border_colour.tolist())
     gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
     shape_ext, _, _, _ = thresholdSegmentation(gray, blur_size, ellipse_size)
 
@@ -95,6 +102,8 @@ class ImageData(Dataset):
 
     def __getitem__(self, index):
         img_path = self.dataset[index]
+        if '3303v_3' not in img_path:
+            return ''
         with Image.open(img_path) as f:
             img = f.convert("RGB")
         np_img = np.asarray(img)
@@ -125,7 +134,7 @@ if __name__ == '__main__':
     dataset = ImageData(args.dataset_dir, args.output_dir)
     dataloader = DataLoader(dataset, batch_size=args.n_workers + 1, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
-    for idxs in tqdm.tqdm(dataloader):
+    for idxs in tqdm.tqdm(dataset):
         a = 1
 
     print('Finished!')
