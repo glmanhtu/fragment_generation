@@ -61,7 +61,8 @@ def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proporti
     kmeans = KMeans(n_clusters=num_clusters, n_init=5)
     kmeans.fit(np.concatenate([background_pixels, foreground_pixels_portion], axis=0))
 
-    arg_sort = np.argsort(np.bincount(kmeans.labels_))
+    item_count = np.bincount(kmeans.labels_)
+    arg_sort = np.argsort(item_count)
 
     # Get the colors in the dominant cluster
     # arg_sort[0] should contain the background colour range, since it has the highest number of pixels
@@ -97,7 +98,11 @@ class ImageData(Dataset):
         with Image.open(img_path) as f:
             img = f.convert("RGB")
         np_img = np.asarray(img)
-        clean_img = remove_background(np_img)
+        try:
+            clean_img = remove_background(np_img)
+        except Exception as e:
+            print(f'Unable to clean image {img_path}')
+            raise e
 
         output_file = os.path.join(self.working_dir, os.path.basename(img_path))
         clean_img = Image.fromarray(clean_img)
