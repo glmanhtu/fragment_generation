@@ -4,6 +4,7 @@ import os
 
 import cv2
 import numpy as np
+import torch
 import tqdm
 from PIL import Image
 from sklearn.cluster import KMeans
@@ -97,7 +98,7 @@ class ImageData(Dataset):
         img_path = self.dataset[index]
         output_file = os.path.join(self.working_dir, os.path.basename(img_path))
         if os.path.exists(output_file):
-            return ''
+            return 1
         with Image.open(img_path) as f:
             img = f.convert("RGB")
         np_img = np.asarray(img)
@@ -106,12 +107,13 @@ class ImageData(Dataset):
             cv2.imwrite(output_file, cv2.cvtColor(clean_img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 100])
         except Exception as e:
             print(f'Unable to clean image {img_path}')
-        return index
+            return 0
+        return 1
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Dataset generator", add_help=True)
-    parser.add_argument("--dataset-dir", required=True, metavar="FILE", help="Path to papyrus images dataset")
+    parser.add_argument("--dataset-dir", required=True, help="Path to papyrus images dataset")
     parser.add_argument("--n-workers", type=int, default=0, help="Number of workers")
     parser.add_argument(
         "--output-dir",
@@ -124,7 +126,9 @@ if __name__ == '__main__':
     dataset = ImageData(args.dataset_dir, args.output_dir)
     dataloader = DataLoader(dataset, batch_size=args.n_workers + 1, num_workers=args.n_workers)
     print('Starting to clean up dataset...')
-    for idxs in tqdm.tqdm(dataloader):
-        a = 1
-
+    items = torch.empty((0,), dtype=torch.int64)
+    for res in tqdm.tqdm(dataloader):
+        items = torch.cat([items, res], dim=0)
+    total = torch.sum(items).item()
+    print(f'Cleaned {total}/{len(dataset)} images!')
     print('Finished!')
