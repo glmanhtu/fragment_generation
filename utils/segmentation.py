@@ -83,9 +83,12 @@ def createMaskVisualization(im, mask, maskOpacity=0.2, imOpacity=0.8):
     return cv2.addWeighted(im, imOpacity, mask_red, maskOpacity, 0)
 
 
-def crop_image(image, pixel_value=0):
+def crop_image(image, is_gray=False, pixel_value=0):
     # Remove the zeros padding
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if is_gray:
+        gray = image
+    else:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     crop_rows_gray = gray[~np.all(gray == pixel_value, axis=1), :]
 
     crop_rows = image[~np.all(gray == pixel_value, axis=1), :]

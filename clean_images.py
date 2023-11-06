@@ -11,16 +11,7 @@ from sklearn.cluster import KMeans
 from torch.utils.data import Dataset, DataLoader
 
 from utils.segmentation import thresholdSegmentation, crop_image
-
-
-def remove_small_artifacts(np_img, kernel_size=2):
-    # Create a kernel for the morphological operations
-    kernel = np.ones((kernel_size, kernel_size), np.uint8)
-
-    # Apply erosion and dilation to remove small artifacts
-    filtered_image = cv2.erode(np_img, kernel, iterations=1)
-    filtered_image = cv2.dilate(filtered_image, kernel, iterations=1)
-    return filtered_image
+from utils.utils import remove_small_artifacts
 
 
 def remove_background(np_img, blur_size=11, ellipse_size=60, foreground_proportion=0.2):

@@ -30,6 +30,8 @@ if __name__ == '__main__':
         image_path = os.path.join(args.dataset_dir, image_def['asset']['name'])
         np_img = cv2.imread(image_path)
         for idx, line_def in enumerate(image_def['regions']):
+            if 'Broken' in line_def['tags']:
+                continue
             bb = line_def['boundingBox']
             l, t, h, w = (round(bb['left']), round(bb['top']), round(bb['height']), round(bb['width']))
             line_im = np_img[t:t + h, l:l + w].copy()
