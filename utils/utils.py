@@ -51,6 +51,13 @@ def paste_image_to_center(target_image, source_image):
     return result_image
 
 
+def compute_white_percentage(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    white_pixel_count = np.sum(gray > 250)
+    total_pixels = gray.shape[0] * gray.shape[1]
+    return white_pixel_count / total_pixels
+
+
 def visualise_fragments(images, labels, degree=0):
     img_vis, label_vis = [], []
     if len(images) == 0:

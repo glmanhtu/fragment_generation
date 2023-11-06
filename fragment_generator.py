@@ -3,15 +3,14 @@ import glob
 import json
 import os
 import random
-import uuid
 from typing import List
 
 import cv2
 import tqdm
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 from utils.fragmentize import FragmentizeStrategy, Fragment1v1Rotate90
-from utils.utils import seed_worker, seed_everything, visualise_fragments
+from utils.utils import seed_everything, compute_white_percentage
 
 
 class ImageData(Dataset):
@@ -31,7 +30,7 @@ class ImageData(Dataset):
         h, w = np_img.shape[:2]
         if h < self.min_size or w < self.min_size:
             return {}
-        all_labels = []
+        results = {}
         for fragmentize_strategy in self.fragmentize_strategies:
             images, labels = fragmentize_strategy.split(np_img)
             # visualise_fragments(images, labels, degree=0)
@@ -49,12 +48,11 @@ class ImageData(Dataset):
             for idx, (img, label) in enumerate(combined_lists):
                 file_path = os.path.join(patch_dir, f'{idx}.jpg')
                 cv2.imwrite(file_path, img, [cv2.IMWRITE_JPEG_QUALITY, 100])
-                label['im_path'] = file_path
-            all_labels += labels
-        results = {}
-        for item in all_labels:
-            for key in item:
-                results.setdefault(key, []).append(item[key])
+                label['im_path'] = file_path.replace(self.working_dir + os.path.sep, '')
+                label['white_percentage'] = round(compute_white_percentage(img), 3)
+
+            random.shuffle(labels)
+            results.setdefault(img_name, {})[fragmentize_strategy.name()] = labels
         return results
 
 
@@ -85,13 +83,11 @@ if __name__ == '__main__':
         Fragment1v1Rotate90(edges, args.patch_size)
     ]
     dataset = ImageData(args.dataset_dir, args.output_dir, fragmentize_strategies)
-    all_labels = {}
-    for labels in tqdm.tqdm(dataset):
-        for key in labels:
-            key_all_labels = all_labels.setdefault(key, [])
-            key_all_labels += labels[key]
+    gt = {}
+    for sample_gt in tqdm.tqdm(dataset):
+        gt = {**gt, **sample_gt}
 
     with open(os.path.join(args.output_dir, 'gt.json'), 'w') as f:
-        json.dump(all_labels, f)
+        json.dump(gt, f)
 
     print('Finished!')
