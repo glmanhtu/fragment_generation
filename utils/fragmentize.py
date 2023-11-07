@@ -48,7 +48,10 @@ class FragmentizeStrategy:
 
         cut_from = random.randint(0, img.shape[1] - width)
         edge = img[:, cut_from:cut_from + width].copy()
-        edge = crop_image(edge, is_gray=True)
+        edge = remove_small_artifacts(edge, kernel_size=1)
+        edge = crop_image(edge)
+        edge = crop_image(edge, pixel_value=250, is_lt=True)
+
         height = edge.shape[0]
 
         out_img = np.zeros((height, width), dtype=np.uint8)

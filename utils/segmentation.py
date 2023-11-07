@@ -83,16 +83,20 @@ def createMaskVisualization(im, mask, maskOpacity=0.2, imOpacity=0.8):
     return cv2.addWeighted(im, imOpacity, mask_red, maskOpacity, 0)
 
 
-def crop_image(image, is_gray=False, pixel_value=0):
+def crop_image(image, pixel_value=10, is_lt=False):
     # Remove the zeros padding
-    if is_gray:
-        gray = image
+    # Find the coordinates of non-zero elements
+    if not is_lt:
+        indices = np.where(image > pixel_value)
     else:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    crop_rows_gray = gray[~np.all(gray == pixel_value, axis=1), :]
+        indices = np.where(image < pixel_value)
 
-    crop_rows = image[~np.all(gray == pixel_value, axis=1), :]
-    cropped_image = crop_rows[:, ~np.all(crop_rows_gray == pixel_value, axis=0)]
+    # Calculate the minimum and maximum row and column indices
+    min_row, max_row = min(indices[0]), max(indices[0])
+    min_col, max_col = min(indices[1]), max(indices[1])
+
+    # Crop the image to the minimum bounding box
+    cropped_image = image[min_row:max_row + 1, min_col:max_col + 1]
     #
     # black_pixels = np.where(
     #     (cropped_image[:, :, 0] == 0) &
