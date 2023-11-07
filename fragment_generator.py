@@ -34,7 +34,7 @@ class ImageData(Dataset):
         results = {}
         for fragmentize_strategy in self.fragmentize_strategies:
             images, labels = fragmentize_strategy.split(np_img)
-            visualise_fragments(images, labels, degree=0).show()
+            # visualise_fragments(images, labels, degree=0).show()
             patch_dir = os.path.join(self.working_dir, img_name, fragmentize_strategy.name())
             if len(images) == 0:
                 continue
