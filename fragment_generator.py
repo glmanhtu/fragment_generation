@@ -6,11 +6,12 @@ import random
 from typing import List
 
 import cv2
+import numpy as np
 import tqdm
 from torch.utils.data import Dataset
 
-from utils.fragmentize import FragmentizeStrategy, Fragment1v1Rotate90
-from utils.utils import seed_everything, compute_white_percentage
+from utils.fragmentize import FragmentizeStrategy, Fragment1v1Rotate90, Fragment1v05Rotate90
+from utils.utils import seed_everything, compute_white_percentage, visualise_fragments
 
 
 class ImageData(Dataset):
@@ -33,7 +34,7 @@ class ImageData(Dataset):
         results = {}
         for fragmentize_strategy in self.fragmentize_strategies:
             images, labels = fragmentize_strategy.split(np_img)
-            # visualise_fragments(images, labels, degree=0)
+            # visualise_fragments(images, labels, degree=0).show()
             patch_dir = os.path.join(self.working_dir, img_name, fragmentize_strategy.name())
             if len(images) == 0:
                 continue
@@ -80,14 +81,32 @@ if __name__ == '__main__':
         item['img_path'] = os.path.join(edges_dir, item['img_path'])
 
     fragmentize_strategies = [
-        Fragment1v1Rotate90(edges, args.patch_size)
+        Fragment1v1Rotate90(edges, args.patch_size),
+        Fragment1v05Rotate90(edges, args.patch_size)
     ]
+
     dataset = ImageData(args.dataset_dir, args.output_dir, fragmentize_strategies)
     gt = {}
     for sample_gt in tqdm.tqdm(dataset):
         gt = {**gt, **sample_gt}
 
-    with open(os.path.join(args.output_dir, 'gt.json'), 'w') as f:
-        json.dump(gt, f)
+    img_names = list(gt.keys())
+    random.shuffle(img_names)
+
+    # Split the dataset to 3 parts with their ratios are 0.7, 0.15, 0.15
+    indicies_for_splitting = [int(len(img_names) * 0.7), int(len(img_names) * (0.7 + 0.15))]
+    train, val, test = np.split(img_names, indicies_for_splitting)
+
+    train_gt = {key: gt[key] for key in train}
+    val_gt = {key: gt[key] for key in val}
+    test_gt = {key: gt[key] for key in test}
+
+    with open(os.path.join(args.output_dir, 'train.json'), 'w') as f:
+        json.dump(train_gt, f)
+    with open(os.path.join(args.output_dir, 'val.json'), 'w') as f:
+        json.dump(val_gt, f)
+    with open(os.path.join(args.output_dir, 'test.json'), 'w') as f:
+        json.dump(test_gt, f)
+
 
     print('Finished!')

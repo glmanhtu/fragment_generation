@@ -1,5 +1,7 @@
+import math
 import os
 import random
+import re
 
 import cv2
 import numpy as np
@@ -58,14 +60,46 @@ def compute_white_percentage(img):
     return white_pixel_count / total_pixels
 
 
+def grouping(val):
+    part, group = math.modf(val)
+    return int(group), int(part * 10)
+
+
+def center_crop(np_img, h, w):
+    center = np_img.shape
+    x = center[1] / 2 - w / 2
+    y = center[0] / 2 - h / 2
+
+    crop_img = np_img[int(y):int(y + h), int(x):int(x + w)]
+    return crop_img
+
+
 def visualise_fragments(images, labels, degree=0):
     img_vis, label_vis = [], []
     if len(images) == 0:
         return
+    small_im_group = {}
+
     for image, label in zip(images, labels):
         if label['degree'] == degree:
-            img_vis.append(image)
-            label_vis.append(label)
+            if isinstance(label['col'], float):
+                j, part_j = grouping(label['col'])
+                i, part_i = grouping(label['row'])
+                im_size = image.shape[0] // 2
+                part_label = {'col': part_j, 'row': part_i, 'degree': degree}
+                part_im = center_crop(image, im_size, im_size)
+                small_im_group.setdefault(f'j{j}i{i}', []).append((part_im, part_label))
+            else:
+                img_vis.append(image)
+                label_vis.append(label)
+
+    for im_group_id in small_im_group:
+        group_imgs = [x[0] for x in small_im_group[im_group_id]]
+        group_labels = [x[1] for x in small_im_group[im_group_id]]
+        im_group = visualise_fragments(group_imgs, group_labels)
+        img_vis.append(cv2.cvtColor(np.asarray(im_group), cv2.COLOR_RGB2BGR))
+        pattern = re.search(r"j(\d+)i(\d+)", im_group_id)
+        label_vis.append({'col': int(pattern.group(1)), 'row': int(pattern.group(2))})
 
     n_cols = max([x['col'] for x in label_vis]) + 1
     n_rows = max([x['row'] for x in label_vis]) + 1
@@ -87,4 +121,4 @@ def visualise_fragments(images, labels, degree=0):
         final_image.paste(fragment_image, (x, y))
 
     # Display or save the final image
-    final_image.show()
+    return final_image
