@@ -39,18 +39,25 @@ class ImageData(Dataset):
             if len(images) == 0:
                 continue
 
+            white_percentages = []
+            for img in images:
+                white_percentages.append(round(compute_white_percentage(img), 3))
+
+            if sum(white_percentages) / len(white_percentages) > 0.90:
+                continue
+
             os.makedirs(patch_dir, exist_ok=True)
 
             # Combine the two lists into a list of tuples using zip
-            combined_lists = list(zip(images, labels))
+            combined_lists = list(zip(images, labels, white_percentages))
 
             # Shuffle the combined list
             random.shuffle(combined_lists)
-            for idx, (img, label) in enumerate(combined_lists):
+            for idx, (img, label, white_percentage) in enumerate(combined_lists):
                 file_path = os.path.join(patch_dir, f'{idx}.jpg')
                 cv2.imwrite(file_path, img, [cv2.IMWRITE_JPEG_QUALITY, 100])
                 label['im_path'] = file_path.replace(self.working_dir + os.path.sep, '')
-                label['white_percentage'] = round(compute_white_percentage(img), 3)
+                label['white_percentage'] = white_percentage
 
             random.shuffle(labels)
             results.setdefault(img_name, {})[fragmentize_strategy.name()] = labels
@@ -94,7 +101,7 @@ if __name__ == '__main__':
     random.shuffle(img_names)
 
     # Split the dataset to 3 parts with their ratios are 0.7, 0.15, 0.15
-    indicies_for_splitting = [int(len(img_names) * 0.7), int(len(img_names) * (0.7 + 0.15))]
+    indicies_for_splitting = [int(len(img_names) * 0.8), int(len(img_names) * (0.8 + 0.1))]
     train, val, test = np.split(img_names, indicies_for_splitting)
 
     train_gt = {key: gt[key] for key in train}
@@ -108,5 +115,5 @@ if __name__ == '__main__':
     with open(os.path.join(args.output_dir, 'test.json'), 'w') as f:
         json.dump(test_gt, f)
 
-
+    print(f'Train: {len(train_gt)}, Val: {len(val_gt)}, Test: {len(test_gt)}')
     print('Finished!')
