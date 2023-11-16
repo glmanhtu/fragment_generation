@@ -177,10 +177,7 @@ class Fragment1v05RotateFree(FragmentizeStrategy):
                         label['col'] = float(f'{j}.{label["col"]}')
                         label['row'] = float(f'{i}.{label["row"]}')
                         labels.append(label)
-
-                        frag_im = np.ones((p_size, p_size, 3), dtype=np.uint8) * 255
-                        frag_im = paste_image_to_center(frag_im, img)
-                        images.append(frag_im)
+                        images.append(img)
                 else:
                     fragment = self.fragmentize(patch, rescale=p_size / self.patch_size)
                     rotated_fragment = rotate(fragment, degree, mode='constant', cval=255, reshape=False)

@@ -85,9 +85,8 @@ def visualise_fragments(images, labels, degree=0):
             if isinstance(label['col'], float):
                 j, part_j = grouping(label['col'])
                 i, part_i = grouping(label['row'])
-                im_size = image.shape[0] // 2
                 part_label = {'col': part_j, 'row': part_i, 'degree': degree}
-                part_im = center_crop(image, im_size, im_size)
+                part_im = image
                 small_im_group.setdefault(f'j{j}i{i}', []).append((part_im, part_label))
             else:
                 img_vis.append(image)
